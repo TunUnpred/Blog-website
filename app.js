@@ -2,6 +2,7 @@
 
 const express = require("express");
 const bodyParser = require("body-parser");
+const mongoose = require('mongoose');
 const ejs = require("ejs");
 var _ = require('lodash');
 
@@ -10,17 +11,22 @@ const aboutContent = "Hac habitasse platea dictumst vestibulum rhoncus est pelle
 const contactContent = "Scelerisque eleifend donec pretium vulputate sapien. Rhoncus urna neque viverra justo nec ultrices. Arcu dui vivamus arcu felis bibendum. Consectetur adipiscing elit duis tristique. Risus viverra adipiscing at in tellus integer feugiat. Sapien nec sagittis aliquam malesuada bibendum arcu vitae. Consequat interdum varius sit amet mattis. Iaculis nunc sed augue lacus. Interdum posuere lorem ipsum dolor sit amet consectetur adipiscing elit. Pulvinar elementum integer enim neque. Ultrices gravida dictum fusce ut placerat orci nulla. Mauris in aliquam sem fringilla ut morbi tincidunt. Tortor posuere ac ut consequat semper viverra nam libero.";
 
 const app = express();
-const articles = [];
 
+mongoose.connect('mongodb://localhost:27017/blog');
 app.set('view engine', 'ejs');
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
-
-
+const postSchema = ({
+  title: String,
+  content: String
+})
+const Post = mongoose.model('Post', postSchema);
 app.get('/', (req, res) => {
-  res.render('home', { startingContent: homeStartingContent, articles: articles });
+  Post.find({}, (err, post) => {
+    res.render('home', { startingContent: homeStartingContent, articles: post });
+  })
 })
 app.get('/about', (req, res) => {
   res.render('about', { startingContent: aboutContent });
@@ -34,31 +40,26 @@ app.get('/compose', (req, res) => {
 })
 
 app.post('/compose', (req, res) => {
-  const postTitle = req.body.title;
-  const postMsg = req.body.msg;
-  const article = {
-    postTitle,
-    postMsg
-  }
-  articles.push(article);
-  res.redirect('/');
+  const post = new Post({
+    title: req.body.title,
+    content: req.body.msg
+  });
+  post.save(err => {
+    if (!err) res.redirect('/');
+
+  });
 })
 
 
 app.get('/post/:topic', (req, res) => {
 
-  articles.forEach(article => {
-    const postedTitle = _.lowerCase(article.postTitle);
-    const writedTitle = _.lowerCase(req.params.topic);
-    console.log(postedTitle, writedTitle);
-    if (postedTitle === writedTitle) {
-      res.render('post', { article: article });
-    }
-  })
-})
+  const writedTitle = req.params.topic;
+  Post.findOne({ _id: writedTitle }, (err, foundPost) => {
+      res.render('post', { title: foundPost.title, content: foundPost.content });
+    
+  });
 
-
-
+});
 
 
 app.listen(3000, function () {

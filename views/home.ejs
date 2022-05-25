@@ -3,12 +3,13 @@
     <p>
         <%= startingContent %>
     </p>
-    <% articles.forEach(article=>{ %>
+    <% articles.forEach(post=>{ %>
         <h1>
-            <%= article.postTitle %>
+            <%= post.title %>
         </h1>
         <p>
-            <%= article.postMsg.substring(0, 50) + '...' %> <a href="/post/<%= article.postTitle %>">Read me</a>
+            <%= post.content + '...' %> <a href="/post/<%= post._id %>">Read me</a>
+            <% console.log(post.content) %>
         </p>
-        <% }) %>
+        <% })%>
             <%- include('partials/footer') %>
